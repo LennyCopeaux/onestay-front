@@ -1,4 +1,3 @@
-import Cookies from "js-cookie";
 import type { User, AuthCredentials, AuthResponse } from "@/types";
 
 /**
@@ -56,15 +55,14 @@ export const authService = {
       throw new Error("Identifiants invalides");
     }
 
-    // Generate mock token
+    // Générer un token mock
     const token = `mock_token_${user.id}_${Date.now()}`;
 
-    // Set session cookie (simulated)
-    Cookies.set("session_token", token, {
-      expires: 7, // 7 days
-      secure: true,
-      sameSite: "strict",
-    });
+    // Stocker dans localStorage (plus simple que les cookies)
+    if (typeof window !== "undefined") {
+      localStorage.setItem("session_token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+    }
 
     return {
       user,
@@ -73,23 +71,42 @@ export const authService = {
   },
 
   /**
-   * Logout - clears session cookie
+   * Déconnexion - supprime la session
    */
   logout(): void {
-    Cookies.remove("session_token");
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("session_token");
+      localStorage.removeItem("user");
+    }
   },
 
   /**
-   * Get current session token
+   * Obtenir le token de session actuel
    */
-  getSessionToken(): string | undefined {
-    return Cookies.get("session_token");
+  getSessionToken(): string | null {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("session_token");
   },
 
   /**
-   * Check if user is authenticated
+   * Vérifier si l'utilisateur est authentifié
    */
   isAuthenticated(): boolean {
-    return !!Cookies.get("session_token");
+    if (typeof window === "undefined") return false;
+    return !!localStorage.getItem("session_token");
+  },
+
+  /**
+   * Obtenir l'utilisateur actuel depuis le stockage
+   */
+  getCurrentUser(): User | null {
+    if (typeof window === "undefined") return null;
+    const userStr = localStorage.getItem("user");
+    if (!userStr) return null;
+    try {
+      return JSON.parse(userStr) as User;
+    } catch {
+      return null;
+    }
   },
 };

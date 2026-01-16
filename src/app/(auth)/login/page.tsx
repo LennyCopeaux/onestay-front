@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -32,7 +31,6 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<LoginFormValues>({
@@ -52,15 +50,9 @@ export default function LoginPage() {
       // Afficher le toast de succès
       toast.success(`Bon retour, ${response.user.name} !`);
 
-      // Redirect based on user role
-      if (response.user.role === "ADMIN") {
-        router.push("/admin");
-      } else if (response.user.role === "HOST") {
-        router.push("/dashboard");
-      } else {
-        // Fallback to dashboard
-        router.push("/dashboard");
-      }
+      // Redirection basée sur le rôle (pages à créer plus tard)
+      // Pour l'instant, on reste sur la page de connexion
+      // TODO: Créer les pages /dashboard et /admin
     } catch (error) {
       // Afficher le toast d'erreur
       toast.error(error instanceof Error ? error.message : "Identifiants invalides");
@@ -135,14 +127,6 @@ export default function LoginPage() {
                     "Se connecter"
                   )}
                 </Button>
-                <div className="text-center">
-                  <a
-                    href="/forgot-password"
-                    className="text-sm text-muted-foreground hover:text-primary underline"
-                  >
-                    Mot de passe oublié ?
-                  </a>
-                </div>
               </div>
             </form>
           </Form>
