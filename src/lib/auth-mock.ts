@@ -1,73 +1,65 @@
 import type { User, AuthCredentials, AuthResponse } from "@/types";
+import { api, type LoginResponse } from "./api";
 
 /**
- * Mock Users Database
- */
-const MOCK_USERS: User[] = [
-  {
-    id: "1",
-    email: "host@demo.com",
-    name: "Hôte Démo",
-    role: "HOST",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "2",
-    email: "admin@demo.com",
-    name: "Admin Démo",
-    role: "ADMIN",
-    createdAt: new Date().toISOString(),
-  },
-];
-
-/**
- * Mock Authentication Service
- * Simulates network delay and validates credentials
+ * Service d'authentification connecté au backend
  */
 export const authService = {
   /**
-   * Login with email and password
-   * @param credentials - Email and password
-   * @returns Promise<AuthResponse> - User object and token
-   * @throws Error if credentials are invalid
+   * Connexion avec email et mot de passe
+   * @param credentials - Email et mot de passe
+   * @returns Promise<AuthResponse> - Objet utilisateur et token
+   * @throws Error si les identifiants sont invalides
    */
   async login(credentials: AuthCredentials): Promise<AuthResponse> {
-    // Simulate network delay (1000ms)
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const response = await api.post<LoginResponse>("/api/v1/auth/login", {
+        email: credentials.email,
+        password: credentials.password,
+      });
 
-    // Find user by email
-    const user = MOCK_USERS.find((u) => u.email === credentials.email);
+      // Convertir la réponse du backend au format frontend
+      const user: User = {
+        id: response.user.id,
+        email: response.user.email,
+        name: `${response.user.prenom} ${response.user.nom}`,
+        role: this.mapRoleIdToRole(response.user.role_id),
+        createdAt: response.user.created_at,
+      };
 
-    // Valider les identifiants
-    if (!user) {
-      throw new Error("Identifiants invalides");
+      // Le token est déjà stocké dans localStorage par l'API
+      const token = typeof window !== "undefined" 
+        ? localStorage.getItem("session_token") 
+        : null;
+
+      // Stocker aussi l'utilisateur
+      if (typeof window !== "undefined") {
+        localStorage.setItem("user", JSON.stringify(user));
+      }
+
+      return {
+        user,
+        token: token || undefined,
+      };
+    } catch (error) {
+      // Relancer l'erreur avec le message approprié
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Erreur de connexion");
     }
+  },
 
-    // Vérifier le mot de passe selon le rôle
-    let isValidPassword = false;
-    if (user.role === "HOST" && credentials.password === "password123") {
-      isValidPassword = true;
-    } else if (user.role === "ADMIN" && credentials.password === "admin123") {
-      isValidPassword = true;
+  /**
+   * Mapper le role_id du backend vers le rôle frontend
+   */
+  mapRoleIdToRole(roleId: string): "HOST" | "ADMIN" {
+    // Mapper les IDs de rôles du backend vers les rôles frontend
+    // 1 = Client, 2 = Loueur, 3 = Admin, 4 = Super Admin
+    if (roleId === "3" || roleId === "4") {
+      return "ADMIN";
     }
-
-    if (!isValidPassword) {
-      throw new Error("Identifiants invalides");
-    }
-
-    // Générer un token mock
-    const token = `mock_token_${user.id}_${Date.now()}`;
-
-    // Stocker dans localStorage (plus simple que les cookies)
-    if (typeof window !== "undefined") {
-      localStorage.setItem("session_token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-    }
-
-    return {
-      user,
-      token,
-    };
+    return "HOST";
   },
 
   /**

@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 
 export default function Home() {
-  // Redirect to login page by default
-  // In a real app, this would check auth state first
+  // Rediriger vers la page de connexion par défaut
   redirect("/login");
 }

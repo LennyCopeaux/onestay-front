@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -31,6 +32,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<LoginFormValues>({
@@ -50,9 +52,8 @@ export default function LoginPage() {
       // Afficher le toast de succès
       toast.success(`Bon retour, ${response.user.name} !`);
 
-      // Redirection basée sur le rôle (pages à créer plus tard)
-      // Pour l'instant, on reste sur la page de connexion
-      // TODO: Créer les pages /dashboard et /admin
+      // Rediriger vers la page d'accueil
+      router.push("/home");
     } catch (error) {
       // Afficher le toast d'erreur
       toast.error(error instanceof Error ? error.message : "Identifiants invalides");
@@ -85,7 +86,7 @@ export default function LoginPage() {
                     <FormControl>
                       <Input
                         type="email"
-                        placeholder="host@demo.com"
+                        placeholder="votre@email.com"
                         disabled={isLoading}
                         {...field}
                       />
@@ -112,37 +113,22 @@ export default function LoginPage() {
                   </FormItem>
                 )}
               />
-              <div className="space-y-2">
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Connexion...
-                    </>
-                  ) : (
-                    "Se connecter"
-                  )}
-                </Button>
-              </div>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Connexion...
+                  </>
+                ) : (
+                  "Se connecter"
+                )}
+              </Button>
             </form>
           </Form>
-          <div className="mt-6 border-t pt-6">
-            <p className="text-xs text-muted-foreground text-center">
-              Identifiants de démonstration :
-            </p>
-            <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-              <p className="text-center">
-                <strong>Hôte :</strong> host@demo.com / password123
-              </p>
-              <p className="text-center">
-                <strong>Admin :</strong> admin@demo.com / admin123
-              </p>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>
