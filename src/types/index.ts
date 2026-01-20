@@ -1,11 +1,5 @@
-/**
- * Property Status
- */
 export type PropertyStatus = "draft" | "published";
 
-/**
- * Amenity Category
- */
 export type AmenityCategory = 
   | "essentials"
   | "features"
@@ -17,9 +11,6 @@ export type AmenityCategory =
   | "outdoor"
   | "other";
 
-/**
- * Contact Type
- */
 export type ContactType = 
   | "host"
   | "property_manager"
@@ -28,9 +19,6 @@ export type ContactType =
   | "cleaning"
   | "other";
 
-/**
- * Local Recommendation Category
- */
 export type RecommendationCategory = 
   | "restaurant"
   | "cafe"
@@ -42,19 +30,13 @@ export type RecommendationCategory =
   | "transportation"
   | "other";
 
-/**
- * Amenity Interface
- */
 export interface Amenity {
   id: string;
   name: string;
   category: AmenityCategory;
-  icon?: string; // Optional icon identifier
+  icon?: string;
 }
 
-/**
- * Contact Interface
- */
 export interface Contact {
   id: string;
   type: ContactType;
@@ -64,9 +46,6 @@ export interface Contact {
   notes?: string;
 }
 
-/**
- * Local Recommendation Interface
- */
 export interface LocalRecommendation {
   id: string;
   category: RecommendationCategory;
@@ -75,52 +54,37 @@ export interface LocalRecommendation {
   address?: string;
   phone?: string;
   website?: string;
-  distance?: string; // e.g., "0.5 miles"
-  rating?: number; // 1-5
+  distance?: string;
+  rating?: number;
 }
 
-/**
- * WiFi Information Interface
- */
 export interface WiFiInfo {
   networkName: string;
   password: string;
   notes?: string;
 }
 
-/**
- * Check-in/Check-out Information Interface
- */
 export interface CheckInOutInfo {
-  checkInTime: string; // e.g., "3:00 PM"
-  checkOutTime: string; // e.g., "11:00 AM"
+  checkInTime: string;
+  checkOutTime: string;
   checkInInstructions?: string;
   checkOutInstructions?: string;
-  keyLocation?: string; // Where to find keys/codes
-  accessCode?: string; // Door code, lockbox code, etc.
+  keyLocation?: string;
+  accessCode?: string;
 }
 
-/**
- * Property Rules Interface
- */
 export interface PropertyRules {
-  houseRules: string[]; // Array of rule strings
+  houseRules: string[];
   smokingAllowed: boolean;
   petsAllowed: boolean;
   partiesAllowed: boolean;
-  quietHours?: string; // e.g., "10 PM - 8 AM"
+  quietHours?: string;
   additionalRules?: string;
 }
 
-/**
- * Property Interface
- * Main interface representing a rental property
- */
 export interface Property {
   id: string;
   status: PropertyStatus;
-  
-  // General Info
   name: string;
   description?: string;
   address: string;
@@ -132,40 +96,20 @@ export interface Property {
     latitude: number;
     longitude: number;
   };
-  images?: string[]; // URLs or paths to images
-  
-  // Check-in/Check-out
+  images?: string[];
   checkInOut: CheckInOutInfo;
-  
-  // WiFi
   wifi: WiFiInfo;
-  
-  // Amenities
   amenities: Amenity[];
-  
-  // Rules
   rules: PropertyRules;
-  
-  // Contacts
   contacts: Contact[];
-  
-  // Local Recommendations
   localRecommendations: LocalRecommendation[];
-  
-  // Metadata
-  createdAt: string; // ISO date string
-  updatedAt: string; // ISO date string
-  publishedAt?: string; // ISO date string (only when status is "published")
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
 }
 
-/**
- * User Role Type
- */
 export type UserRole = "HOST" | "ADMIN";
 
-/**
- * User Interface (for Host)
- */
 export interface User {
   id: string;
   email: string;
@@ -174,18 +118,43 @@ export interface User {
   createdAt: string;
 }
 
-/**
- * Auth Credentials Interface
- */
+export interface Role {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface ApiUser {
+  id: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  role: Role;
+  created_at: string;
+}
+
 export interface AuthCredentials {
   email: string;
   password: string;
 }
 
-/**
- * Auth Response Interface
- */
 export interface AuthResponse {
   user: User;
-  token?: string; // For simulated auth
+  token?: string;
+}
+
+export interface CreateUserRequest {
+  nom: string;
+  prenom: string;
+  email: string;
+  password: string;
+  role_id: string;
+}
+
+export interface UpdateUserRequest {
+  nom?: string;
+  prenom?: string;
+  email?: string;
+  password?: string;
+  role_id?: string;
 }
