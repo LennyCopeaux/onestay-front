@@ -17,14 +17,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { CreateLogementRequest } from "@/types";
+import type { CreatePropertyRequest } from "@/types";
 
 const propertySchema = z.object({
-  nom_bien: z.string().min(3, "Le nom doit contenir au moins 3 caractères"),
-  description: z.string().min(1, "La description est requise"),
-  adresse: z.string().min(5, "L'adresse doit contenir au moins 5 caractères"),
-  ville: z.string().min(2, "La ville est requise"),
-  pays: z.string().min(2, "Le pays est requis"),
+  name: z.string().min(3, "Le nom doit contenir au moins 3 caractères"),
+  description: z.string().optional(),
+  address: z.string().min(5, "L'adresse doit contenir au moins 5 caractères"),
+  city: z.string().min(2, "La ville est requise"),
+  country: z.string().min(2, "Le pays est requis"),
+  zipCode: z.string().optional(),
 });
 
 type PropertyFormValues = z.infer<typeof propertySchema>;
@@ -32,7 +33,7 @@ type PropertyFormValues = z.infer<typeof propertySchema>;
 interface CreatePropertyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: CreateLogementRequest) => Promise<void>;
+  onSubmit: (data: CreatePropertyRequest) => Promise<void>;
 }
 
 export function CreatePropertyDialog({ open, onOpenChange, onSubmit }: CreatePropertyDialogProps) {
@@ -41,11 +42,12 @@ export function CreatePropertyDialog({ open, onOpenChange, onSubmit }: CreatePro
   const form = useForm<PropertyFormValues>({
     resolver: zodResolver(propertySchema),
     defaultValues: {
-      nom_bien: "",
+      name: "",
       description: "",
-      adresse: "",
-      ville: "",
-      pays: "France",
+      address: "",
+      city: "",
+      country: "France",
+      zipCode: "",
     },
   });
 
@@ -71,19 +73,19 @@ export function CreatePropertyDialog({ open, onOpenChange, onSubmit }: CreatePro
         </DialogHeader>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="nom_bien">Nom du bien *</Label>
+            <Label htmlFor="name">Nom du bien *</Label>
             <Input
-              id="nom_bien"
+              id="name"
               placeholder="Ex: Appartement cosy dans le Marais"
               disabled={isSubmitting}
-              {...form.register("nom_bien")}
+              {...form.register("name")}
             />
-            {form.formState.errors.nom_bien && (
-              <p className="text-sm text-destructive">{form.formState.errors.nom_bien.message}</p>
+            {form.formState.errors.name && (
+              <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description">Description *</Label>
+            <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
               placeholder="Décrivez votre bien en quelques mots..."
@@ -91,45 +93,51 @@ export function CreatePropertyDialog({ open, onOpenChange, onSubmit }: CreatePro
               rows={3}
               {...form.register("description")}
             />
-            {form.formState.errors.description && (
-              <p className="text-sm text-destructive">{form.formState.errors.description.message}</p>
-            )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="adresse">Adresse *</Label>
+            <Label htmlFor="address">Adresse *</Label>
             <Input
-              id="adresse"
+              id="address"
               placeholder="15 Rue des Rosiers"
               disabled={isSubmitting}
-              {...form.register("adresse")}
+              {...form.register("address")}
             />
-            {form.formState.errors.adresse && (
-              <p className="text-sm text-destructive">{form.formState.errors.adresse.message}</p>
+            {form.formState.errors.address && (
+              <p className="text-sm text-destructive">{form.formState.errors.address.message}</p>
             )}
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="ville">Ville *</Label>
+              <Label htmlFor="city">Ville *</Label>
               <Input
-                id="ville"
+                id="city"
                 placeholder="Paris"
                 disabled={isSubmitting}
-                {...form.register("ville")}
+                {...form.register("city")}
               />
-              {form.formState.errors.ville && (
-                <p className="text-sm text-destructive">{form.formState.errors.ville.message}</p>
+              {form.formState.errors.city && (
+                <p className="text-sm text-destructive">{form.formState.errors.city.message}</p>
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="pays">Pays *</Label>
+              <Label htmlFor="zipCode">Code postal</Label>
               <Input
-                id="pays"
+                id="zipCode"
+                placeholder="75004"
+                disabled={isSubmitting}
+                {...form.register("zipCode")}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="country">Pays *</Label>
+              <Input
+                id="country"
                 placeholder="France"
                 disabled={isSubmitting}
-                {...form.register("pays")}
+                {...form.register("country")}
               />
-              {form.formState.errors.pays && (
-                <p className="text-sm text-destructive">{form.formState.errors.pays.message}</p>
+              {form.formState.errors.country && (
+                <p className="text-sm text-destructive">{form.formState.errors.country.message}</p>
               )}
             </div>
           </div>

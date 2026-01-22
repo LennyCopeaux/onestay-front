@@ -3,10 +3,11 @@ import type {
   Role, 
   CreateUserRequest, 
   UpdateUserRequest,
-  Logement,
-  CreateLogementRequest,
-  LogementResponse,
-  LogementsListResponse,
+  Property,
+  CreatePropertyRequest,
+  UpdatePropertyRequest,
+  PropertyResponse,
+  PropertiesListResponse,
   ProfileResponse
 } from "@/types";
 
@@ -136,21 +137,48 @@ export const api = {
     await this.delete(`/api/v1/users/${userId}`);
   },
 
-  // ==================== LOGEMENTS ====================
-
-  async createLogement(data: CreateLogementRequest): Promise<Logement> {
-    const response = await this.post<LogementResponse>("/api/v1/logements", data);
-    return response.logement;
-  },
-
-  async getLogementsByUser(userId: string): Promise<Logement[]> {
-    const response = await this.get<LogementsListResponse>(`/api/v1/logements/user/${userId}`);
-    return response.logements || [];
-  },
-
   // ==================== PROFILE ====================
 
   async getProfile(): Promise<ProfileResponse> {
     return this.get<ProfileResponse>("/api/v1/users/profile");
+  },
+
+  async updateProfile(data: { nom?: string; prenom?: string; email?: string; password?: string }): Promise<void> {
+    await this.put("/api/v1/users/profile", data);
+  },
+
+  async deleteAccount(): Promise<void> {
+    await this.delete("/api/v1/users/profile");
+  },
+
+  // ==================== PROPERTIES ====================
+
+  async createProperty(data: CreatePropertyRequest): Promise<Property> {
+    const response = await this.post<PropertyResponse>("/api/v1/properties", data);
+    return response.property;
+  },
+
+  async getPropertiesByUser(userId: string): Promise<Property[]> {
+    const response = await this.get<PropertiesListResponse>(`/api/v1/properties/user/${userId}`);
+    return response.properties || [];
+  },
+
+  async getProperty(idOrSlug: string): Promise<Property> {
+    const response = await this.get<PropertyResponse>(`/api/v1/properties/${idOrSlug}`);
+    return response.property;
+  },
+
+  async updateProperty(idOrSlug: string, data: UpdatePropertyRequest): Promise<Property> {
+    const response = await this.put<PropertyResponse>(`/api/v1/properties/${idOrSlug}`, data);
+    return response.property;
+  },
+
+  async publishProperty(idOrSlug: string): Promise<Property> {
+    const response = await this.post<PropertyResponse>(`/api/v1/properties/${idOrSlug}/publish`, {});
+    return response.property;
+  },
+
+  async deleteProperty(idOrSlug: string): Promise<void> {
+    await this.delete(`/api/v1/properties/${idOrSlug}`);
   },
 };

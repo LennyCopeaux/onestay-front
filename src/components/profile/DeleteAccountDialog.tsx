@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,26 +13,27 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { Property } from "@/types";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-interface DeletePropertyDialogProps {
-  property: Property | null;
+interface DeleteAccountDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: (propertyId: string) => Promise<void>;
+  onConfirm: () => Promise<void>;
 }
 
-export function DeletePropertyDialog({ property, open, onOpenChange, onConfirm }: DeletePropertyDialogProps) {
+export function DeleteAccountDialog({ open, onOpenChange, onConfirm }: DeleteAccountDialogProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
 
   const handleConfirm = async () => {
-    if (!property) return;
+    if (confirmText !== "SUPPRIMER") return;
     setIsDeleting(true);
     try {
-      await onConfirm(property._id);
-      onOpenChange(false);
+      await onConfirm();
     } finally {
       setIsDeleting(false);
+      setConfirmText("");
     }
   };
 
@@ -39,17 +41,29 @@ export function DeletePropertyDialog({ property, open, onOpenChange, onConfirm }
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Supprimer le bien</AlertDialogTitle>
-          <AlertDialogDescription>
-            Êtes-vous sûr de vouloir supprimer <strong>{property?.name}</strong> ?
-            Cette action est irréversible et supprimera également la page publique associée.
+          <AlertDialogTitle className="text-destructive">Supprimer mon compte</AlertDialogTitle>
+          <AlertDialogDescription className="space-y-4">
+            <p>
+              Cette action est <strong>irréversible</strong>. Toutes vos données seront définitivement supprimées, 
+              y compris tous vos biens et leurs informations.
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="confirm">Tapez <strong>SUPPRIMER</strong> pour confirmer</Label>
+              <Input
+                id="confirm"
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder="SUPPRIMER"
+                disabled={isDeleting}
+              />
+            </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirm}
-            disabled={isDeleting}
+            disabled={isDeleting || confirmText !== "SUPPRIMER"}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             {isDeleting ? (
@@ -58,7 +72,7 @@ export function DeletePropertyDialog({ property, open, onOpenChange, onConfirm }
                 Suppression...
               </>
             ) : (
-              "Supprimer"
+              "Supprimer définitivement"
             )}
           </AlertDialogAction>
         </AlertDialogFooter>

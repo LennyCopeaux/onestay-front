@@ -10,20 +10,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Logement } from "@/types";
+import type { Property } from "@/types";
 
 interface PropertyCardProps {
-  logement: Logement;
-  onEdit: (logement: Logement) => void;
-  onDelete: (logement: Logement) => void;
-  onPublish: (logement: Logement) => void;
-  onUnpublish: (logement: Logement) => void;
-  onCopyLink: (logement: Logement) => void;
-  onViewPublic: (logement: Logement) => void;
+  property: Property;
+  onEdit: (property: Property) => void;
+  onDelete: (property: Property) => void;
+  onPublish: (property: Property) => void;
+  onUnpublish: (property: Property) => void;
+  onCopyLink: (property: Property) => void;
+  onViewPublic: (property: Property) => void;
 }
 
 export function PropertyCard({
-  logement,
+  property,
   onEdit,
   onDelete,
   onPublish,
@@ -31,7 +31,7 @@ export function PropertyCard({
   onCopyLink,
   onViewPublic,
 }: PropertyCardProps) {
-  const isPublished = logement.status === 2;
+  const isPublished = property.status === 2;
 
   return (
     <Card className="overflow-hidden transition-shadow hover:shadow-md">
@@ -39,14 +39,14 @@ export function PropertyCard({
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <CardTitle className="text-lg">{logement.nom_bien}</CardTitle>
+              <CardTitle className="text-lg">{property.name}</CardTitle>
               <Badge variant={isPublished ? "default" : "secondary"}>
                 {isPublished ? "Publié" : "Brouillon"}
               </Badge>
             </div>
             <CardDescription className="flex items-center gap-1">
               <MapPin className="h-3 w-3" />
-              {logement.ville}, {logement.pays}
+              {property.city}, {property.country}
             </CardDescription>
           </div>
           <DropdownMenu>
@@ -58,35 +58,35 @@ export function PropertyCard({
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onEdit(logement)}>
+              <DropdownMenuItem onClick={() => onEdit(property)}>
                 <Pencil className="mr-2 h-4 w-4" />
                 Modifier
               </DropdownMenuItem>
               {isPublished ? (
                 <>
-                  <DropdownMenuItem onClick={() => onViewPublic(logement)}>
+                  <DropdownMenuItem onClick={() => onViewPublic(property)}>
                     <ExternalLink className="mr-2 h-4 w-4" />
                     Voir la page
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onCopyLink(logement)}>
+                  <DropdownMenuItem onClick={() => onCopyLink(property)}>
                     <Copy className="mr-2 h-4 w-4" />
                     Copier le lien
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => onUnpublish(logement)}>
+                  <DropdownMenuItem onClick={() => onUnpublish(property)}>
                     <EyeOff className="mr-2 h-4 w-4" />
                     Dépublier
                   </DropdownMenuItem>
                 </>
               ) : (
-                <DropdownMenuItem onClick={() => onPublish(logement)}>
+                <DropdownMenuItem onClick={() => onPublish(property)}>
                   <Eye className="mr-2 h-4 w-4" />
                   Publier
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() => onDelete(logement)}
+                onClick={() => onDelete(property)}
                 className="text-destructive focus:text-destructive"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
@@ -98,13 +98,13 @@ export function PropertyCard({
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground line-clamp-2">
-          {logement.description || "Aucune description"}
+          {property.description || "Aucune description"}
         </p>
         <div className="mt-4 text-xs text-muted-foreground">
-          <span>{logement.adresse}</span>
+          <span>{property.address}</span>
         </div>
         <div className="mt-3">
-          <Button variant="outline" size="sm" className="w-full" onClick={() => onEdit(logement)}>
+          <Button variant="outline" size="sm" className="w-full" onClick={() => onEdit(property)}>
             <Pencil className="mr-2 h-3 w-3" />
             Modifier les informations
           </Button>

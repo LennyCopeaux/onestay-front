@@ -17,6 +17,9 @@ import {
 import { authService } from "@/lib/auth-mock";
 import { api } from "@/lib/api";
 import { LoadingScreen } from "@/components/shared/LoadingScreen";
+import { EditProfileDialog } from "@/components/profile/EditProfileDialog";
+import { ChangePasswordDialog } from "@/components/profile/ChangePasswordDialog";
+import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +30,9 @@ export function ProfileContainer() {
   const router = useRouter();
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     const user = authService.getCurrentUser();
@@ -63,6 +69,48 @@ export function ProfileContainer() {
   const handleLogout = () => {
     authService.logout();
     router.push("/login");
+  };
+
+  const handleUpdateProfile = async (data: { nom: string; prenom: string; email: string }) => {
+    try {
+      await api.updateProfile(data);
+      toast.success("Profil mis à jour avec succès");
+      await loadProfile();
+      
+      const currentUser = authService.getCurrentUser();
+      if (currentUser) {
+        authService.updateCurrentUser({
+          ...currentUser,
+          name: `${data.prenom} ${data.nom}`,
+          email: data.email,
+        });
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erreur lors de la mise à jour");
+      throw error;
+    }
+  };
+
+  const handleChangePassword = async (password: string) => {
+    try {
+      await api.updateProfile({ password });
+      toast.success("Mot de passe modifié avec succès");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erreur lors de la modification");
+      throw error;
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      await api.deleteAccount();
+      toast.success("Compte supprimé avec succès");
+      authService.logout();
+      router.push("/login");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erreur lors de la suppression");
+      throw error;
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -160,35 +208,51 @@ export function ProfileContainer() {
               <Button 
                 variant="outline" 
                 className="w-full justify-start gap-3" 
-                disabled
+                onClick={() => setIsEditDialogOpen(true)}
               >
                 <Pencil className="h-4 w-4" />
                 Modifier mes informations
-                <Badge variant="secondary" className="ml-auto">Bientôt</Badge>
               </Button>
               <Button 
                 variant="outline" 
                 className="w-full justify-start gap-3" 
-                disabled
+                onClick={() => setIsPasswordDialogOpen(true)}
               >
                 <Lock className="h-4 w-4" />
                 Changer mon mot de passe
-                <Badge variant="secondary" className="ml-auto">Bientôt</Badge>
               </Button>
               <Separator className="my-4" />
               <Button 
                 variant="outline" 
                 className="w-full justify-start gap-3 text-destructive hover:text-destructive" 
-                disabled
+                onClick={() => setIsDeleteDialogOpen(true)}
               >
                 <Trash2 className="h-4 w-4" />
                 Supprimer mon compte
-                <Badge variant="secondary" className="ml-auto">Bientôt</Badge>
               </Button>
             </CardContent>
           </Card>
         </div>
       </main>
+
+      <EditProfileDialog
+        profile={profile}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSubmit={handleUpdateProfile}
+      />
+
+      <ChangePasswordDialog
+        open={isPasswordDialogOpen}
+        onOpenChange={setIsPasswordDialogOpen}
+        onSubmit={handleChangePassword}
+      />
+
+      <DeleteAccountDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleDeleteAccount}
+      />
     </div>
   );
 }

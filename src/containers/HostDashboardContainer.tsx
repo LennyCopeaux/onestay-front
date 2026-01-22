@@ -14,21 +14,21 @@ import { CreatePropertyDialog } from "@/components/host/CreatePropertyDialog";
 import { DeletePropertyDialog } from "@/components/host/DeletePropertyDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import type { User, Logement, CreateLogementRequest } from "@/types";
+import type { User, Property, CreatePropertyRequest } from "@/types";
 
 export function HostDashboardContainer() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [logements, setLogements] = useState<Logement[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [logementToDelete, setLogementToDelete] = useState<Logement | null>(null);
+  const [propertyToDelete, setPropertyToDelete] = useState<Property | null>(null);
 
-  const loadLogements = useCallback(async (userId: string) => {
+  const loadProperties = useCallback(async (userId: string) => {
     try {
-      const data = await api.getLogementsByUser(userId);
-      setLogements(data);
+      const data = await api.getPropertiesByUser(userId);
+      setProperties(data);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erreur lors du chargement des biens");
     }
@@ -48,41 +48,44 @@ export function HostDashboardContainer() {
     }
 
     setCurrentUser(user);
-    loadLogements(user.id).finally(() => setIsLoading(false));
-  }, [router, loadLogements]);
+    loadProperties(user.id).finally(() => setIsLoading(false));
+  }, [router, loadProperties]);
 
   const handleLogout = () => {
     authService.logout();
     router.push("/login");
   };
 
-  const handleCreateProperty = async (data: CreateLogementRequest) => {
+  const handleCreateProperty = async (data: CreatePropertyRequest) => {
     try {
-      const newLogement = await api.createLogement(data);
+      const newProperty = await api.createProperty(data);
       toast.success("Bien créé avec succès");
       if (currentUser) {
-        await loadLogements(currentUser.id);
+        await loadProperties(currentUser.id);
       }
-      router.push(`/dashboard/properties/${newLogement.id}`);
+      router.push(`/dashboard/properties/${newProperty._id}`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erreur lors de la création");
       throw error;
     }
   };
 
-  const handleEditProperty = (logement: Logement) => {
-    router.push(`/dashboard/properties/${logement.id}`);
+  const handleEditProperty = (property: Property) => {
+    router.push(`/dashboard/properties/${property._id}`);
   };
 
-  const handleDeleteProperty = (logement: Logement) => {
-    setLogementToDelete(logement);
+  const handleDeleteProperty = (property: Property) => {
+    setPropertyToDelete(property);
     setIsDeleteDialogOpen(true);
   };
 
-  const confirmDeleteProperty = async (logementId: string) => {
+  const confirmDeleteProperty = async (propertyId: string) => {
     try {
-      // TODO: Implémenter DELETE côté backend
-      toast.info("Suppression non disponible pour le moment");
+      await api.deleteProperty(propertyId);
+      toast.success("Bien supprimé avec succès");
+      if (currentUser) {
+        await loadProperties(currentUser.id);
+      }
       setIsDeleteDialogOpen(false);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erreur lors de la suppression");
@@ -90,32 +93,43 @@ export function HostDashboardContainer() {
     }
   };
 
-  const handlePublishProperty = async (logement: Logement) => {
-    // TODO: Implémenter PATCH status côté backend
-    toast.info("Publication non disponible pour le moment");
+  const handlePublishProperty = async (property: Property) => {
+    try {
+      await api.publishProperty(property._id);
+      toast.success("Bien publié avec succès");
+      if (currentUser) {
+        await loadProperties(currentUser.id);
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erreur lors de la publication");
+    }
   };
 
-  const handleUnpublishProperty = async (logement: Logement) => {
-    // TODO: Implémenter PATCH status côté backend
-    toast.info("Dépublication non disponible pour le moment");
+  const handleUnpublishProperty = async (property: Property) => {
+    try {
+      await api.updateProperty(property._id, { });
+      toast.info("Dépublication non disponible pour le moment");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erreur lors de la dépublication");
+    }
   };
 
-  const handleCopyLink = (logement: Logement) => {
-    const url = `${window.location.origin}/p/${logement.id}`;
+  const handleCopyLink = (property: Property) => {
+    const url = `${window.location.origin}/p/${property.slug}`;
     navigator.clipboard.writeText(url);
     toast.success("Lien copié dans le presse-papiers");
   };
 
-  const handleViewPublic = (logement: Logement) => {
-    window.open(`/p/${logement.id}`, "_blank");
+  const handleViewPublic = (property: Property) => {
+    window.open(`/p/${property.slug}`, "_blank");
   };
 
   if (isLoading) {
     return <LoadingScreen />;
   }
 
-  const publishedCount = logements.filter((l) => l.status === 2).length;
-  const draftCount = logements.filter((l) => l.status === 1).length;
+  const publishedCount = properties.filter((p) => p.status === 2).length;
+  const draftCount = properties.filter((p) => p.status === 1).length;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -141,7 +155,7 @@ export function HostDashboardContainer() {
               <CardTitle className="text-sm font-medium">Total</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{logements.length}</div>
+              <div className="text-2xl font-bold">{properties.length}</div>
               <p className="text-xs text-muted-foreground">bien(s) enregistré(s)</p>
             </CardContent>
           </Card>
@@ -165,7 +179,7 @@ export function HostDashboardContainer() {
           </Card>
         </div>
 
-        {logements.length === 0 ? (
+        {properties.length === 0 ? (
           <Card className="py-16">
             <CardContent className="flex flex-col items-center justify-center text-center">
               <Home className="mb-4 h-12 w-12 text-muted-foreground" />
@@ -181,10 +195,10 @@ export function HostDashboardContainer() {
           </Card>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {logements.map((logement) => (
+            {properties.map((property) => (
               <PropertyCard
-                key={logement.id}
-                logement={logement}
+                key={property._id}
+                property={property}
                 onEdit={handleEditProperty}
                 onDelete={handleDeleteProperty}
                 onPublish={handlePublishProperty}
@@ -204,7 +218,7 @@ export function HostDashboardContainer() {
       />
 
       <DeletePropertyDialog
-        logement={logementToDelete}
+        property={propertyToDelete}
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={confirmDeleteProperty}

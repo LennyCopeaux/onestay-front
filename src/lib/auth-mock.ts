@@ -64,4 +64,10 @@ export const authService = {
       return null;
     }
   },
+
+  updateCurrentUser(user: User): void {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("user", JSON.stringify(user));
+    }
+  },
 };

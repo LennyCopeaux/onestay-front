@@ -1,20 +1,36 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, ExternalLink, Loader2 } from "lucide-react";
 
 import { authService } from "@/lib/auth-mock";
 import { api } from "@/lib/api";
 import { LoadingScreen } from "@/components/shared/LoadingScreen";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import type { Logement } from "@/types";
+import { CategoryNav, type CategoryId } from "@/components/host/CategoryNav";
+import { UnsavedChangesDialog } from "@/components/host/UnsavedChangesDialog";
+import { GeneralInfoForm } from "@/components/host/forms/GeneralInfoForm";
+import { CheckInOutForm } from "@/components/host/forms/CheckInOutForm";
+import { WifiForm } from "@/components/host/forms/WifiForm";
+import { EquipmentForm } from "@/components/host/forms/EquipmentForm";
+import { RulesForm } from "@/components/host/forms/RulesForm";
+import { InstructionsForm } from "@/components/host/forms/InstructionsForm";
+import { ParkingForm } from "@/components/host/forms/ParkingForm";
+import { TransportForm } from "@/components/host/forms/TransportForm";
+import { SecurityForm } from "@/components/host/forms/SecurityForm";
+import { ServicesForm } from "@/components/host/forms/ServicesForm";
+import { BabyKidsForm } from "@/components/host/forms/BabyKidsForm";
+import { PetsForm } from "@/components/host/forms/PetsForm";
+import { EntertainmentForm } from "@/components/host/forms/EntertainmentForm";
+import { OutdoorForm } from "@/components/host/forms/OutdoorForm";
+import { NeighborhoodForm } from "@/components/host/forms/NeighborhoodForm";
+import { EmergencyForm } from "@/components/host/forms/EmergencyForm";
+import { ContactsForm } from "@/components/host/forms/ContactsForm";
+import { RecommendationsForm } from "@/components/host/forms/RecommendationsForm";
+import type { Property, UpdatePropertyRequest } from "@/types";
 
 interface PropertyEditContainerProps {
   propertyId: string;
@@ -22,39 +38,20 @@ interface PropertyEditContainerProps {
 
 export function PropertyEditContainer({ propertyId }: PropertyEditContainerProps) {
   const router = useRouter();
-  const [logement, setLogement] = useState<Logement | null>(null);
+  const [property, setProperty] = useState<Property | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  
-  const [nomBien, setNomBien] = useState("");
-  const [description, setDescription] = useState("");
-  const [adresse, setAdresse] = useState("");
-  const [ville, setVille] = useState("");
-  const [pays, setPays] = useState("");
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<CategoryId>("general");
+  const [isDirty, setIsDirty] = useState(false);
+  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+  const pendingCategoryRef = useRef<CategoryId | null>(null);
+  const currentFormRef = useRef<HTMLFormElement | null>(null);
 
-  const loadLogement = useCallback(async () => {
+  const loadProperty = useCallback(async () => {
     try {
-      const user = authService.getCurrentUser();
-      if (!user) {
-        router.push("/login");
-        return;
-      }
-      
-      const logements = await api.getLogementsByUser(user.id);
-      const found = logements.find((l) => l.id === propertyId);
-      
-      if (!found) {
-        toast.error("Bien introuvable");
-        router.push("/dashboard");
-        return;
-      }
-      
-      setLogement(found);
-      setNomBien(found.nom_bien);
-      setDescription(found.description);
-      setAdresse(found.adresse);
-      setVille(found.ville);
-      setPays(found.pays);
+      const data = await api.getProperty(propertyId);
+      setProperty(data);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erreur lors du chargement");
       router.push("/dashboard");
@@ -67,27 +64,139 @@ export function PropertyEditContainer({ propertyId }: PropertyEditContainerProps
       router.push("/login");
       return;
     }
-    loadLogement().finally(() => setIsLoading(false));
-  }, [router, loadLogement]);
+    loadProperty().finally(() => setIsLoading(false));
+  }, [router, loadProperty]);
 
-  const handleSave = async () => {
-    if (!logement) return;
+  const handleSave = async (data: UpdatePropertyRequest) => {
+    if (!property) return;
     setIsSaving(true);
     try {
-      // TODO: Implémenter PUT /api/v1/logements/:id côté backend
-      toast.info("Modification non disponible pour le moment (backend à implémenter)");
+      const updated = await api.updateProperty(property._id, data);
+      setProperty(updated);
+      setIsDirty(false);
+      toast.success("Modifications enregistrées");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erreur lors de la sauvegarde");
+      throw error;
     } finally {
       setIsSaving(false);
     }
   };
 
-  if (isLoading || !logement) {
+  const handleCategoryChange = (newCategory: CategoryId) => {
+    if (isDirty) {
+      pendingCategoryRef.current = newCategory;
+      setShowUnsavedDialog(true);
+    } else {
+      setActiveCategory(newCategory);
+    }
+  };
+
+  const handleDialogSave = () => {
+    if (currentFormRef.current) {
+      currentFormRef.current.requestSubmit();
+    }
+    setShowUnsavedDialog(false);
+    if (pendingCategoryRef.current) {
+      setTimeout(() => {
+        setActiveCategory(pendingCategoryRef.current!);
+        pendingCategoryRef.current = null;
+      }, 100);
+    }
+  };
+
+  const handleDialogDiscard = () => {
+    setShowUnsavedDialog(false);
+    setIsDirty(false);
+    if (pendingCategoryRef.current) {
+      setActiveCategory(pendingCategoryRef.current);
+      pendingCategoryRef.current = null;
+    }
+    loadProperty();
+  };
+
+  const handleDialogCancel = () => {
+    setShowUnsavedDialog(false);
+    pendingCategoryRef.current = null;
+  };
+
+  const handlePublish = async () => {
+    if (!property) return;
+    setIsPublishing(true);
+    try {
+      const updated = await api.publishProperty(property._id);
+      setProperty(updated);
+      toast.success("Bien publié avec succès");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erreur lors de la publication");
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  const handleViewPublic = () => {
+    if (!property) return;
+    window.open(`/p/${property.slug}`, "_blank");
+  };
+
+  if (isLoading || !property) {
     return <LoadingScreen />;
   }
 
-  const isPublished = logement.status === 2;
+  const isPublished = property.status === 2;
+
+  const enabledCategories: Record<CategoryId, boolean> = {
+    general: true,
+    checkinout: property.checkInOut?.enabled ?? false,
+    wifi: property.wifi?.enabled ?? false,
+    equipment: property.equipment?.enabled ?? false,
+    rules: property.rules?.enabled ?? false,
+    instructions: property.instructions?.enabled ?? false,
+    parking: property.parking?.enabled ?? false,
+    transport: property.transport?.enabled ?? false,
+    security: property.security?.enabled ?? false,
+    services: property.services?.enabled ?? false,
+    babykids: property.babyKids?.enabled ?? false,
+    pets: property.pets?.enabled ?? false,
+    entertainment: property.entertainment?.enabled ?? false,
+    outdoor: property.outdoor?.enabled ?? false,
+    neighborhood: property.neighborhood?.enabled ?? false,
+    emergency: property.emergency?.enabled ?? false,
+    contacts: property.contacts?.enabled ?? false,
+    recommendations: property.localRecommendations?.enabled ?? false,
+  };
+
+  const commonFormProps = {
+    property,
+    onSave: handleSave,
+    isSaving,
+    onDirtyChange: setIsDirty,
+    formRef: currentFormRef,
+  };
+
+  const renderForm = () => {
+    switch (activeCategory) {
+      case "general": return <GeneralInfoForm {...commonFormProps} />;
+      case "checkinout": return <CheckInOutForm {...commonFormProps} />;
+      case "wifi": return <WifiForm {...commonFormProps} />;
+      case "equipment": return <EquipmentForm {...commonFormProps} />;
+      case "rules": return <RulesForm {...commonFormProps} />;
+      case "instructions": return <InstructionsForm {...commonFormProps} />;
+      case "parking": return <ParkingForm {...commonFormProps} />;
+      case "transport": return <TransportForm {...commonFormProps} />;
+      case "security": return <SecurityForm {...commonFormProps} />;
+      case "services": return <ServicesForm {...commonFormProps} />;
+      case "babykids": return <BabyKidsForm {...commonFormProps} />;
+      case "pets": return <PetsForm {...commonFormProps} />;
+      case "entertainment": return <EntertainmentForm {...commonFormProps} />;
+      case "outdoor": return <OutdoorForm {...commonFormProps} />;
+      case "neighborhood": return <NeighborhoodForm {...commonFormProps} />;
+      case "emergency": return <EmergencyForm {...commonFormProps} />;
+      case "contacts": return <ContactsForm {...commonFormProps} />;
+      case "recommendations": return <RecommendationsForm {...commonFormProps} />;
+      default: return null;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -99,109 +208,63 @@ export function PropertyEditContainer({ propertyId }: PropertyEditContainerProps
             </Button>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-semibold">{logement.nom_bien}</h1>
+                <h1 className="font-semibold">{property.name}</h1>
                 <Badge variant={isPublished ? "default" : "secondary"}>
                   {isPublished ? "Publié" : "Brouillon"}
                 </Badge>
+                {isDirty && (
+                  <Badge variant="outline" className="text-orange-500 border-orange-500">
+                    Non sauvegardé
+                  </Badge>
+                )}
               </div>
-              <p className="text-sm text-muted-foreground">{logement.ville}, {logement.pays}</p>
+              <p className="text-sm text-muted-foreground">{property.city}, {property.country}</p>
             </div>
           </div>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="mr-2 h-4 w-4" />
+          <div className="flex items-center gap-2">
+            {isPublished && (
+              <Button variant="outline" size="sm" onClick={handleViewPublic}>
+                <ExternalLink className="mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Voir la page</span>
+              </Button>
             )}
-            Enregistrer
-          </Button>
+            {isPublished ? (
+              <Button variant="outline" size="sm" disabled>
+                <EyeOff className="mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Publié</span>
+              </Button>
+            ) : (
+              <Button size="sm" onClick={handlePublish} disabled={isPublishing}>
+                {isPublishing ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Eye className="mr-2 h-4 w-4" />
+                )}
+                <span className="hidden sm:inline">Publier</span>
+              </Button>
+            )}
+          </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6">
-        <div className="max-w-2xl mx-auto">
-          <Card>
-            <CardHeader>
-              <CardTitle>Informations générales</CardTitle>
-              <CardDescription>
-                Les informations de base de votre bien
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="nom_bien">Nom du bien</Label>
-                <Input
-                  id="nom_bien"
-                  value={nomBien}
-                  onChange={(e) => setNomBien(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={4}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="adresse">Adresse</Label>
-                <Input
-                  id="adresse"
-                  value={adresse}
-                  onChange={(e) => setAdresse(e.target.value)}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="ville">Ville</Label>
-                  <Input
-                    id="ville"
-                    value={ville}
-                    onChange={(e) => setVille(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="pays">Pays</Label>
-                  <Input
-                    id="pays"
-                    value={pays}
-                    onChange={(e) => setPays(e.target.value)}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      <main className="container mx-auto px-4 py-6 space-y-6">
+        <CategoryNav
+          activeCategory={activeCategory}
+          onCategoryChange={handleCategoryChange}
+          enabledCategories={enabledCategories}
+        />
 
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>Catégories détaillées</CardTitle>
-              <CardDescription>
-                Ces fonctionnalités seront disponibles une fois le backend étendu
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {[
-                  "Arrivée/Départ", "Wi-Fi", "Équipements", "Règlement", "Consignes",
-                  "Parking", "Transports", "Sécurité", "Services", "Divertissement",
-                  "Extérieur", "Bébé/Enfants", "Animaux", "Quartier", "Urgences",
-                  "Contacts", "Recommandations"
-                ].map((cat) => (
-                  <div
-                    key={cat}
-                    className="p-3 rounded-lg border bg-muted/50 text-center text-sm text-muted-foreground"
-                  >
-                    {cat}
-                    <p className="text-xs mt-1">Bientôt disponible</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        <div className="max-w-3xl mx-auto">
+          {renderForm()}
         </div>
       </main>
+
+      <UnsavedChangesDialog
+        open={showUnsavedDialog}
+        onSave={handleDialogSave}
+        onDiscard={handleDialogDiscard}
+        onCancel={handleDialogCancel}
+      />
     </div>
   );
 }
