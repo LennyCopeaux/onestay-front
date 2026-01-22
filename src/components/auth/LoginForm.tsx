@@ -50,7 +50,7 @@ export function LoginForm() {
       if (response.user.role === "ADMIN") {
         router.push("/admin");
       } else {
-        router.push("/home");
+        router.push("/dashboard");
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Identifiants invalides");

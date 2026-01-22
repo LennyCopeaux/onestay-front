@@ -1,4 +1,14 @@
-import type { ApiUser, Role, CreateUserRequest, UpdateUserRequest } from "@/types";
+import type { 
+  ApiUser, 
+  Role, 
+  CreateUserRequest, 
+  UpdateUserRequest,
+  Logement,
+  CreateLogementRequest,
+  LogementResponse,
+  LogementsListResponse,
+  ProfileResponse
+} from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
@@ -102,6 +112,8 @@ export const api = {
     });
   },
 
+  // ==================== USERS ====================
+
   async getUsers(): Promise<ApiUser[]> {
     const response = await this.get<UsersResponse>("/api/v1/users");
     return response.users || [];
@@ -122,5 +134,23 @@ export const api = {
 
   async deleteUser(userId: string): Promise<void> {
     await this.delete(`/api/v1/users/${userId}`);
+  },
+
+  // ==================== LOGEMENTS ====================
+
+  async createLogement(data: CreateLogementRequest): Promise<Logement> {
+    const response = await this.post<LogementResponse>("/api/v1/logements", data);
+    return response.logement;
+  },
+
+  async getLogementsByUser(userId: string): Promise<Logement[]> {
+    const response = await this.get<LogementsListResponse>(`/api/v1/logements/user/${userId}`);
+    return response.logements || [];
+  },
+
+  // ==================== PROFILE ====================
+
+  async getProfile(): Promise<ProfileResponse> {
+    return this.get<ProfileResponse>("/api/v1/users/profile");
   },
 };

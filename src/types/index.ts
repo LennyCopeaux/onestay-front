@@ -1,112 +1,39 @@
-export type PropertyStatus = "draft" | "published";
+// ==================== LOGEMENT (Backend) ====================
 
-export type AmenityCategory = 
-  | "essentials"
-  | "features"
-  | "safety"
-  | "entertainment"
-  | "kitchen"
-  | "bathroom"
-  | "bedroom"
-  | "outdoor"
-  | "other";
+export type LogementStatus = 1 | 2; // 1 = brouillon, 2 = publié
 
-export type ContactType = 
-  | "host"
-  | "property_manager"
-  | "emergency"
-  | "maintenance"
-  | "cleaning"
-  | "other";
-
-export type RecommendationCategory = 
-  | "restaurant"
-  | "cafe"
-  | "bar"
-  | "attraction"
-  | "shopping"
-  | "grocery"
-  | "pharmacy"
-  | "transportation"
-  | "other";
-
-export interface Amenity {
+export interface Logement {
   id: string;
-  name: string;
-  category: AmenityCategory;
-  icon?: string;
+  nom_bien: string;
+  description: string;
+  adresse: string;
+  ville: string;
+  pays: string;
+  user_id: string;
+  status: LogementStatus;
+  created_at: string;
+  updated_at?: string;
 }
 
-export interface Contact {
-  id: string;
-  type: ContactType;
-  name: string;
-  phone?: string;
-  email?: string;
-  notes?: string;
+export interface CreateLogementRequest {
+  nom_bien: string;
+  description: string;
+  adresse: string;
+  ville: string;
+  pays: string;
 }
 
-export interface LocalRecommendation {
-  id: string;
-  category: RecommendationCategory;
-  name: string;
-  description?: string;
-  address?: string;
-  phone?: string;
-  website?: string;
-  distance?: string;
-  rating?: number;
+export interface LogementResponse {
+  message: string;
+  logement: Logement;
 }
 
-export interface WiFiInfo {
-  networkName: string;
-  password: string;
-  notes?: string;
+export interface LogementsListResponse {
+  logements: Logement[];
+  count: number;
 }
 
-export interface CheckInOutInfo {
-  checkInTime: string;
-  checkOutTime: string;
-  checkInInstructions?: string;
-  checkOutInstructions?: string;
-  keyLocation?: string;
-  accessCode?: string;
-}
-
-export interface PropertyRules {
-  houseRules: string[];
-  smokingAllowed: boolean;
-  petsAllowed: boolean;
-  partiesAllowed: boolean;
-  quietHours?: string;
-  additionalRules?: string;
-}
-
-export interface Property {
-  id: string;
-  status: PropertyStatus;
-  name: string;
-  description?: string;
-  address: string;
-  city: string;
-  state?: string;
-  country: string;
-  zipCode?: string;
-  coordinates?: {
-    latitude: number;
-    longitude: number;
-  };
-  images?: string[];
-  checkInOut: CheckInOutInfo;
-  wifi: WiFiInfo;
-  amenities: Amenity[];
-  rules: PropertyRules;
-  contacts: Contact[];
-  localRecommendations: LocalRecommendation[];
-  createdAt: string;
-  updatedAt: string;
-  publishedAt?: string;
-}
+// ==================== AUTH & USERS ====================
 
 export type UserRole = "HOST" | "ADMIN";
 
@@ -157,4 +84,53 @@ export interface UpdateUserRequest {
   email?: string;
   password?: string;
   role_id?: string;
+}
+
+export interface ProfileResponse {
+  id: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  role: Role;
+  created_at: string;
+}
+
+// ==================== PROPERTY DETAILS (Frontend Only - Future Backend) ====================
+// Ces types seront utilisés quand le backend sera étendu
+
+export type ContactType = "host" | "concierge" | "cleaning" | "maintenance" | "emergency" | "neighbor" | "other";
+export type RecommendationCategory = "restaurant" | "cafe" | "bar" | "bakery" | "grocery" | "market" | "pharmacy" | "doctor" | "hospital" | "attraction" | "beach" | "park" | "sport" | "shopping" | "nightlife" | "culture" | "other";
+export type ParkingType = "street" | "garage" | "driveway" | "private" | "public";
+export type NoiseLevel = "quiet" | "moderate" | "lively";
+
+export interface PropertyContact {
+  id: string;
+  type: ContactType;
+  name: string;
+  phone: string;
+  email?: string;
+  notes?: string;
+}
+
+export interface Recommendation {
+  id: string;
+  category: RecommendationCategory;
+  name: string;
+  description?: string;
+  address?: string;
+  phone?: string;
+  website?: string;
+  distance?: string;
+  rating?: number;
+}
+
+export interface PropertyEquipment {
+  id: string;
+  name: string;
+  category: "bedroom" | "bathroom" | "kitchen" | "living" | "outdoor" | "baby" | "work" | "other";
+}
+
+export interface InstructionItem {
+  enabled: boolean;
+  content: string;
 }

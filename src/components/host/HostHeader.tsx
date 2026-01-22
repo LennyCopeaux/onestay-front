@@ -12,18 +12,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-interface AdminHeaderProps {
+interface HostHeaderProps {
   userName: string;
   onLogout: () => void;
 }
 
-export function AdminHeader({ userName, onLogout }: AdminHeaderProps) {
+export function HostHeader({ userName, onLogout }: HostHeaderProps) {
   return (
     <header className="border-b bg-white dark:bg-gray-800">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-4">
-          <Home className="h-6 w-6" />
-          <h1 className="text-xl font-bold">OneStay Admin</h1>
+          <Home className="h-6 w-6 text-primary" />
+          <h1 className="text-xl font-bold">OneStay</h1>
         </div>
         <div className="flex items-center gap-4">
           <DropdownMenu>
